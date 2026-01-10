@@ -1,0 +1,24 @@
+Requirements:
+pip install pandas
+
+How to use:
+
+On terminal Run it: python merge_csv_files.py
+Then:
+
+It will prompt you to enter the CSV filenames one per line
+Press Enter twice (empty line) when you're done entering filenames
+It will ask you for the output filename
+Then it will merge all the files
+
+Enter the names of CSV files to merge (one per line).
+Press Enter twice when done:
+
+sales_2023.csv
+sales_2024.csv
+sales_2025.csv
+[press Enter again]
+
+Enter name for merged output file (e.g., merged.csv): all_sales.csv
+
+The script will then merge all the files and save the result. You can use just the filename if the files are in the same directory, or include the full path if they're elsewhere (e.g., /path/to/file.csv).
