@@ -1,0 +1,10 @@
+Requirements:
+pip install pandas
+
+How to use:
+
+On terminal Run it: python excel_column_data_checker.py
+Enter:
+
+Your CSV filename (e.g., data.csv)
+The column name you want to check
