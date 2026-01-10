@@ -1,0 +1,24 @@
+How to use:
+
+On terminal Run it: python csv_data_comparison.py
+Follow the prompts to enter:
+
+Paths to both CSV files
+ID column names for matching records
+Data column names (source and target)
+Output file name
+
+Requirements:
+pip install pandas
+```
+
+**Example:**
+```
+CSV file 1: employees.csv
+CSV file 2: hr_records.csv
+ID column in file 1: employee_id
+ID column in file 2: id
+Data column in file 1: dob
+Data column in file 2: date_of_birth
+
+The script will match records by ID and copy the date_of_birth values from file 2 to fill in blank dob entries in file 1.
