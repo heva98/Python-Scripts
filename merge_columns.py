@@ -13,9 +13,17 @@ tool_wanakaya.columns = tool_wanakaya.columns.str.strip()
 print(f"Records katika tool4under5: {len(tool_under_5)}")
 print(f"Records katika tool4wanakaya: {len(tool_wanakaya)}")
 
-# Angalia unique households
-print(f"\nUnique households katika under-5: {tool_under_5['SMPS 4. Namba ya utambulisho wa kaya iliyochaguliwa'].nunique()}")
-print(f"Unique households katika wanakaya: {tool_wanakaya['SMPS 4. Namba ya utambulisho wa kaya iliyochaguliwa'].nunique()}")
+# Angalia columns
+print("\nColumns katika tool4under5:")
+print(tool_under_5.columns.tolist())
+
+# Angalia kama kuna line number column katika tool4under5
+if 'SMPS 4. 91. Namba ya mstari ya mwanakaya' in tool_under_5.columns:
+    print("\n✓ Namba ya mstari ipo katika tool4under5")
+    print(f"Sample ya line numbers: {tool_under_5['SMPS 4. 91. Namba ya mstari ya mwanakaya'].head(10).tolist()}")
+else:
+    print("\n✗ Namba ya mstari HAIPO katika tool4under5")
+    print("Tunahitaji kuongeza hii column kwanza!")
 
 # Filter wanakaya - chagua watoto walio chini ya miaka 5 TU
 watoto_chini_5 = tool_wanakaya[
@@ -23,17 +31,36 @@ watoto_chini_5 = tool_wanakaya[
     (tool_wanakaya['SMPS 4. Ingiza umri wa mwanakaya kwa miezi'] < 60)
 ].copy()
 
-print(f"Watoto walio chini ya miaka 5 kutoka wanakaya: {len(watoto_chini_5)}")
+print(f"\nWatoto walio chini ya miaka 5 kutoka wanakaya: {len(watoto_chini_5)}")
 
-# ANZA NA TOOL4UNDER5 (15,952 records) - LEFT JOIN
-# Kila record ya under-5 itapata taarifa za mtoto kutoka wanakaya
-merged_data = pd.merge(
-    tool_under_5,
-    watoto_chini_5,
-    on='SMPS 4. Namba ya utambulisho wa kaya iliyochaguliwa',
-    how='left',
-    suffixes=('_under5', '_wanakaya')
-)
+# Check kama line number ipo katika tool4under5
+if 'SMPS 4. 91. Namba ya mstari ya mwanakaya' in tool_under_5.columns:
+    # UNGANISHA KWA HOUSEHOLD ID **NA** LINE NUMBER
+    merge_keys = [
+        'SMPS 4. Namba ya utambulisho wa kaya iliyochaguliwa',
+        'SMPS 4. 91. Namba ya mstari ya mwanakaya'
+    ]
+    
+    print(f"\nKuunganisha kwa: {merge_keys}")
+    
+    merged_data = pd.merge(
+        tool_under_5,
+        watoto_chini_5,
+        on=merge_keys,
+        how='left',
+        suffixes=('_under5', '_wanakaya')
+    )
+else:
+    # Kama hakuna line number, unganisha kwa household ID tu
+    print("\nKuunganisha kwa household ID peke yake (TATIZO!)")
+    
+    merged_data = pd.merge(
+        tool_under_5,
+        watoto_chini_5,
+        on='SMPS 4. Namba ya utambulisho wa kaya iliyochaguliwa',
+        how='left',
+        suffixes=('_under5', '_wanakaya')
+    )
 
 print(f"\nRecords baada ya kuunganisha: {len(merged_data)}")
 
@@ -50,7 +77,12 @@ result['Street/Villages'] = merged_data['Street/Villages_wanakaya'].fillna(merge
 # IDs
 result['SMPS 4 : Namba Ya Utambulisho Wa Kijiji'] = merged_data['SMPS 4 : Namba Ya Utambulisho Wa Kijiji']
 result['SMPS 4. Namba ya utambulisho wa kaya iliyochaguliwa'] = merged_data['SMPS 4. Namba ya utambulisho wa kaya iliyochaguliwa']
-result['SMPS 4. 91. Namba ya mstari ya mwanakaya'] = merged_data['SMPS 4. 91. Namba ya mstari ya mwanakaya']
+
+# Line number - chagua kutoka under5 kama ipo, vinginevyo kutoka wanakaya
+if 'SMPS 4. 91. Namba ya mstari ya mwanakaya' in tool_under_5.columns:
+    result['SMPS 4. 91. Namba ya mstari ya mwanakaya'] = merged_data['SMPS 4. 91. Namba ya mstari ya mwanakaya']
+else:
+    result['SMPS 4. 91. Namba ya mstari ya mwanakaya'] = merged_data['SMPS 4. 91. Namba ya mstari ya mwanakaya']
 
 # Child info kutoka wanakaya
 result['SMPS 4: Jinsia'] = merged_data['SMPS 4: Jinsia']
@@ -82,27 +114,22 @@ print(f"\n✓ MAFANIKIO! Data imehifadhiwa kwenye '{output_file}'")
 print(f"✓ Jumla ya records: {len(result)} (expected: 15952)")
 print(f"✓ Kaya tofauti: {result['SMPS 4. Namba ya utambulisho wa kaya iliyochaguliwa'].nunique()}")
 
+# Angalia duplicates - lazima hakuna!
+duplicates = result[result.duplicated(subset=['SMPS 4. Namba ya utambulisho wa kaya iliyochaguliwa', 'SMPS 4. 91. Namba ya mstari ya mwanakaya'], keep=False)]
+print(f"✓ Duplicates (same household + line): {len(duplicates)}")
+
+if len(duplicates) > 0:
+    print("\n⚠️ ONYO: Kuna duplicates! Hebu tuangalie:")
+    print(duplicates[['SMPS 4. Namba ya utambulisho wa kaya iliyochaguliwa', 
+                      'SMPS 4. 91. Namba ya mstari ya mwanakaya',
+                      'SMPS 4. 92. Jina la Kwanza']].head(20))
+
 # Angalia records zisizo na taarifa za mtoto
 missing_child_info = result['SMPS 4. 92. Jina la Kwanza'].isna().sum()
 print(f"✓ Records bila jina la mtoto: {missing_child_info}")
 
-# Angalia kuna kaya zenye watoto zaidi ya mmoja katika under-5
-household_counts = result['SMPS 4. Namba ya utambulisho wa kaya iliyochaguliwa'].value_counts()
-multiple_children = household_counts[household_counts > 1]
-print(f"✓ Kaya zenye watoto zaidi ya mmoja: {len(multiple_children)}")
-if len(multiple_children) > 0:
-    print(f"   Max watoto kwa kaya moja: {household_counts.max()}")
-
-# Muhtasari wa umri
-print("\n--- Muhtasari wa Umri (kwa wale wenye data) ---")
-umri_counts = result['SMPS 4. Je, mwanakaya ana umri gani?'].value_counts().sort_index()
-print(umri_counts)
-
-# Muhtasari wa malaria tests
-print("\n--- Malaria Tests ---")
-print(f"Positive: {(result['SMPS 4 Tafsiri ya Kipimo cha malaria'] == 'Positive').sum()}")
-print(f"Negative: {(result['SMPS 4 Tafsiri ya Kipimo cha malaria'] == 'Negative').sum()}")
-print(f"Missing: {result['SMPS 4 Tafsiri ya Kipimo cha malaria'].isna().sum()}")
+if missing_child_info > 0:
+    print(f"   ({missing_child_info / len(result) * 100:.1f}% ya records)")
 
 print("\n--- Sampuli ya data (mistari 10 ya kwanza) ---")
 print(result[['SMPS 4. Namba ya utambulisho wa kaya iliyochaguliwa', 
