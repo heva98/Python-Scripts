@@ -1,7 +1,7 @@
 import pandas as pd
 
 # Read both CSV files
-tool4_df = pd.read_csv('tool-4-RCH.csv')
+tool4_df = pd.read_csv('tool-4-wanakaya.csv')
 enrollments_df = pd.read_csv('enrollments.csv')
 
 # Strip whitespace from column names
@@ -9,7 +9,7 @@ tool4_df.columns = tool4_df.columns.str.strip()
 enrollments_df.columns = enrollments_df.columns.str.strip()
 
 # Define the household ID column name
-household_id_col = 'SMPS 4. Namba ya utambulisho wa kaya iliyochaguliwa'
+household_id_col = 'kijiji'
 
 # Define columns to copy
 columns_to_copy = ['National', 'Regions', 'Councils', 'Wards']
